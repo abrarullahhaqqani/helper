@@ -3,12 +3,15 @@ import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 /*************  ✨ Windsurf Command ⭐  *************/
 /**
- * Handles signing up a user
- * @function
- * @param {Object} req - request object
- * @param {Object} res - response object
- * @returns {Promise<void>}
-/*******  aeb98002-5df0-4ec2-8b0f-383c05311beb  *******/
+ * Signs up a user
+ * @param {Object} req.body - The request body
+ * @param {string} req.body.name - The user's name
+ * @param {string} req.body.email - The user's email
+ * @param {string} req.body.password - The user's password
+ * @returns {Object} res - The response object
+ * @returns {number} res.status - The status code
+ * @returns {Object} res.json - The response body
+/*******  c5a96c26-753d-4d90-838d-f26fc2be762a  *******/
 export const signUp = async (req, res) => {
   try {
     const { name, email, password } = req.body;
