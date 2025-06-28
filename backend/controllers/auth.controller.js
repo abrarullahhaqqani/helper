@@ -1,6 +1,14 @@
 import getToken from "../config/token.js";
 import User from "../models/user.model.js";
-import bcrypt from "bcrypt.js";
+import bcrypt from "bcryptjs";
+/*************  ✨ Windsurf Command ⭐  *************/
+/**
+ * Handles signing up a user
+ * @function
+ * @param {Object} req - request object
+ * @param {Object} res - response object
+ * @returns {Promise<void>}
+/*******  aeb98002-5df0-4ec2-8b0f-383c05311beb  *******/
 export const signUp = async (req, res) => {
   try {
     const { name, email, password } = req.body;
