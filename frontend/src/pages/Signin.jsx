@@ -3,39 +3,43 @@ import { useNavigate } from "react-router-dom";
 import iron_man from "../assets/iron_man.jpeg";
 import { FaRegEye } from "react-icons/fa";
 import { IoEyeOffOutline } from "react-icons/io5";
-import { userDataContext } from "../context/userContext";
+import { userDataContext } from "../context/UserContext"; // 👈 Match exact filename if it's lowercase
 import axios from "axios";
+
 const SignIn = () => {
-  //state for password showing or no
   const [showPassword, setShowPassword] = useState(false);
-  const { serverUrl } = useContext(userDataContext); //Get the server url using context api
+  const { serverUrl, userData, setUserData } = useContext(userDataContext);
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
+
   const handleSignIn = async (e) => {
-    e.preventDefault(); //Make sure the page doesn't reload and data is not lost
+    e.preventDefault();
     setErr("");
     setLoading(true);
     try {
-      let result = await axios.post(
+      const result = await axios.post(
         `${serverUrl}/api/auth/signin`,
-        {
-          email,
-          password,
-        },
+        { email, password },
         { withCredentials: true }
       );
-      console.log(result);
+
+      setUserData(result.data);
+
       setLoading(false);
+
+      navigate("/");
     } catch (error) {
       console.log(error);
+      setUserData(null);
       setLoading(false);
-      setErr(error.response.data.message);
+      setErr(error.response?.data?.message || "Login failed");
     }
   };
+
   return (
     <div
       className="w-full h-[100vh] bg-cover flex justify-center items-center"
@@ -60,28 +64,23 @@ const SignIn = () => {
           <input
             type={showPassword ? "text" : "password"}
             placeholder="Password"
-            className="w-full h-full outline-none bg-transparent   px-[20px] py-[10px] rounded-full text-[18px]"
+            className="w-full h-full outline-none bg-transparent px-[20px] py-[10px] rounded-full text-[18px]"
             onChange={(e) => setPassword(e.target.value)}
             value={password}
           />
-          {!showPassword && (
+          {!showPassword ? (
             <FaRegEye
               className="absolute top-[10px] right-[20px] text-[white] cursor-pointer"
-              onClick={() => {
-                setShowPassword(true);
-              }}
+              onClick={() => setShowPassword(true)}
             />
-          )}
-          {showPassword && (
+          ) : (
             <IoEyeOffOutline
               className="absolute top-[10px] right-[20px] text-[white] cursor-pointer"
-              onClick={() => {
-                setShowPassword(false);
-              }}
+              onClick={() => setShowPassword(false)}
             />
           )}
         </div>
-        {err.length > 0 && <p className="text-red-500 text-[18px]">*{err}</p>}
+        {err && <p className="text-red-500 text-[18px]">*{err}</p>}
         <button
           className="min-w-[150px] h-[40px] bg-white rounded-full text-black font-semibold text-20px mt-[30px]"
           disabled={loading}
@@ -92,7 +91,7 @@ const SignIn = () => {
           className="text-[white] text-[18px] cursor-pointer"
           onClick={() => navigate("/signup")}
         >
-          Don't have an account ? <span className="text-red-500 ">Sign Up</span>
+          Don't have an account? <span className="text-red-500">Sign Up</span>
         </p>
       </form>
     </div>

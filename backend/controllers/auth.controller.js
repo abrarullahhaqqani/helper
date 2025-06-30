@@ -24,11 +24,16 @@ export const signUp = async (req, res) => {
       email,
     });
     const token = getToken(user._id);
+    if (!token) {
+      return res.status(500).json({ message: "Token generation failed" });
+    }
     res.cookie("token", token, {
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: "strict",
+      sameSite: "lax",
       secure: false, //Remember to change to true and sameSite: "none" when in production/deploying
+
+      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), // 7 days
     });
     return res.status(201).json(user);
   } catch (error) {
@@ -55,10 +60,13 @@ export const Login = async (req, res) => {
     }
 
     const token = getToken(user._id);
+    if (!token) {
+      return res.status(500).json({ message: "Token generation failed" });
+    }
     res.cookie("token", token, {
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: "strict",
+      sameSite: "lax",
       secure: false, //Remember to change to true and sameSite: "none" when in production/deploying
     });
     return res.status(200).json(user);

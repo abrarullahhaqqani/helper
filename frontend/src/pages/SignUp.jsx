@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 import iron_man from "../assets/iron_man.jpeg";
 import { FaRegEye } from "react-icons/fa";
 import { IoEyeOffOutline, IoLogoFacebook } from "react-icons/io5";
-import { userDataContext } from "../context/userContext";
+import { userDataContext } from "../context/UserContext";
 import axios from "axios";
 const SignUp = () => {
   //state for password showing or no
   const [showPassword, setShowPassword] = useState(false);
-  const { serverUrl } = useContext(userDataContext); //Get the server url using context api
+  const { serverUrl, userData, setUserData } = useContext(userDataContext); //Get the server url using context api
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,10 +30,14 @@ const SignUp = () => {
         },
         { withCredentials: true }
       );
-      console.log(result);
+      // console.log(result);
+
+      setUserData(result.data);
       setLoading(false);
+      navigate("/customize");
     } catch (error) {
       console.log(error);
+      setUserData(null);
       setErr(error.response.data.message);
       setLoading(false);
     }
