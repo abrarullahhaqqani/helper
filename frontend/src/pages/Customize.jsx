@@ -40,10 +40,6 @@ function Customize() {
 
   return (
     <div className=" w-full h-[100vh] bg-gradient-to-t from-[black] to-[#030353] flex justify-center items-center flex-col p-[20px]">
-      <MdKeyboardBackspace
-        className="absolute top-[30px] left-[30px] cursor-pointer text-white w-[25px] h-[25px] "
-        onClick={() => navigate("/")}
-      />
       <h1
         className="text-white mb-[30px] text-[30px] text-center
       "

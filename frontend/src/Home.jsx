@@ -13,15 +13,16 @@ function Home() {
   const navigate = useNavigate();
 
   const [listening, setListening] = useState(false);
-
   const [userText, setUserText] = useState("");
   const [aiText, setAiText] = useState("");
-
-  const isSpeakingRef = useRef(false);
-  const recognitionRef = useRef(null);
   const [ham, setHam] = useState(false);
+
+  const recognitionRef = useRef(null);
+  const isSpeakingRef = useRef(false);
   const isRecognizingRef = useRef(false);
   const fallbackIntervalRef = useRef(null);
+  const hasGreetedRef = useRef(false);
+  const shouldStartRecognition = useRef(true);
   const synth = window.speechSynthesis;
 
   const handleLogOut = async () => {
@@ -44,17 +45,18 @@ function Home() {
     if (hindiVoice) {
       utterance.voice = hindiVoice;
     }
+
     isSpeakingRef.current = true;
     utterance.onend = () => {
       setAiText("");
       isSpeakingRef.current = false;
-      // restart recognition after short delay
       setTimeout(() => {
-        if (!isRecognizingRef.current) {
+        if (!isRecognizingRef.current && shouldStartRecognition.current) {
           recognitionRef.current?.start();
         }
       }, 500);
     };
+
     synth.speak(utterance);
   };
 
@@ -105,14 +107,19 @@ function Home() {
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.lang = "en-US";
-
     recognitionRef.current = recognition;
+    shouldStartRecognition.current = true;
 
     const safeStart = () => {
-      if (!isSpeakingRef.current && !isRecognizingRef.current) {
+      if (
+        shouldStartRecognition.current &&
+        !isSpeakingRef.current &&
+        !isRecognizingRef.current
+      ) {
         try {
-          recognition.start();
-          console.log(" Recognition requested to start");
+          recognitionRef.current.start();
+          isRecognizingRef.current = true;
+          console.log("Recognition requested to start");
         } catch (err) {
           if (err.name !== "InvalidStateError") {
             console.error("Recognition start error:", err);
@@ -154,13 +161,12 @@ function Home() {
       ) {
         setAiText("");
         setUserText(transcript);
-        recognition.stop(); // temporarily stop
+        recognition.stop(); // pause recognition
         isRecognizingRef.current = false;
         setListening(false);
         const data = await getGeminiResponse(transcript);
         if (data?.response) {
           handleCommand(data);
-
           setAiText(data.response);
           setUserText("");
         } else {
@@ -169,41 +175,82 @@ function Home() {
       }
     };
 
-    // start once
-    safeStart();
+    // greeting
+    const greetUser = () => {
+      if (userData?.name && !hasGreetedRef.current) {
+        hasGreetedRef.current = true;
 
-    // restart fallback every 15 seconds
+        const greeting = new SpeechSynthesisUtterance(
+          `Hello ${userData.name}, how can I help you?`
+        );
+        greeting.lang = "hi-IN";
+        const voices = synth.getVoices();
+        const hindiVoice = voices.find((v) => v.lang === "hi-IN");
+        if (hindiVoice) greeting.voice = hindiVoice;
+
+        greeting.onend = () => {
+          setTimeout(() => {
+            safeStart();
+          }, 500);
+        };
+
+        synth.speak(greeting);
+      }
+    };
+
+    const voices = synth.getVoices();
+    if (voices.length > 0) {
+      setTimeout(() => greetUser(), 300);
+    } else {
+      synth.onvoiceschanged = () => {
+        greetUser();
+        synth.onvoiceschanged = null;
+      };
+    }
+
     fallbackIntervalRef.current = setInterval(() => {
       if (!isSpeakingRef.current && !isRecognizingRef.current) {
-        console.log(" Fallback trying to restart recognition");
+        console.log("Fallback trying to restart recognition");
         safeStart();
       }
     }, 15000);
 
     return () => {
+      shouldStartRecognition.current = false;
       recognition.stop();
       clearInterval(fallbackIntervalRef.current);
       isRecognizingRef.current = false;
       setListening(false);
+      synth.onvoiceschanged = null;
     };
   }, [userData, getGeminiResponse]);
 
   return (
     <div className="w-full h-[100vh] bg-gradient-to-t from-[black] to-[#02023d] flex justify-center items-center flex-col gap-[15px]">
-      <CgMenuRight className="lg:hidden text-white absolute top-[20px] right-[20px] w-[25px] h-[25px]" />
+      <CgMenuRight
+        className="lg:hidden text-white absolute top-[20px] right-[20px] w-[25px] h-[25px]"
+        onClick={() => setHam(true)}
+      />
 
-      <div className="absolute top-0 w-full h-full bg-[#00000053] backdrop-blur-lg p-[20px] flex flex-col gap-[20px] items-start">
-        <RxCross1 className=" text-white absolute top-[20px] right-[20px] w-[25px] h-[25px]" />
+      <div
+        className={`absolute top-0 lg:hidden right-0 w-full h-full bg-[#00000053] backdrop-blur-lg p-[20px] flex flex-col gap-[20px] items-start transition-all duration-300 transform ${
+          ham ? "translate-x-0" : "translate-x-full transition-transform"
+        }`}
+      >
+        <RxCross1
+          className=" text-white absolute top-[20px] right-[20px] w-[25px] h-[25px]"
+          onClick={() => setHam(false)}
+        />
 
         <button
-          className="min-w-[150px] h-[60px]  bg-white rounded-full cursor-pointer text-black font-semibold top-[20px] right-[20px] text-20px mt-[30px]"
+          className="min-w-[150px] h-[60px]  bg-white rounded-full cursor-pointer text-black font-semibold mt-[30px]"
           onClick={handleLogOut}
         >
           Log Out
         </button>
 
         <button
-          className="min-w-[150px] h-[60px] bg-white  rounded-full cursor-pointer text-black font-semibold text-[19px] px-[20px] py-[10px]"
+          className="min-w-[150px] h-[60px] bg-white rounded-full cursor-pointer text-black font-semibold text-[19px] px-[20px] py-[10px]"
           onClick={() => navigate("/customize")}
         >
           Customize Your Assistant
@@ -223,7 +270,7 @@ function Home() {
       </div>
 
       <button
-        className="min-w-[150px] h-[40px] bg-white rounded-full cursor-pointer text-black font-semibold absolute hidden lg:block top-[20px] right-[20px] text-20px mt-[30px]"
+        className="min-w-[150px] h-[40px] bg-white rounded-full cursor-pointer text-black font-semibold absolute hidden lg:block top-[20px] right-[20px]"
         onClick={handleLogOut}
       >
         Log Out
@@ -248,9 +295,8 @@ function Home() {
         I'm {userData?.assistantName}
       </h1>
 
-      {!aiText && <img src={userImg} alt="" className="w-[200px]"></img>}
-
-      {aiText && <img src={aiImg} alt="" className="w-[200px]"></img>}
+      {!aiText && <img src={userImg} alt="" className="w-[200px]" />}
+      {aiText && <img src={aiImg} alt="" className="w-[200px]" />}
 
       <h1 className="text-white text-[18px] font-semibold text-wrap">
         {userText ? userText : aiText ? aiText : null}
