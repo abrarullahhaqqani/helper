@@ -3,19 +3,23 @@ import { userDataContext } from "./context/UserContext";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import aiImg from "./assets/ai.gif";
-import userImage from "./assets/user.gif";
-import { RiMenu3Fill } from "react-icons/ri";
+import { CgMenuRight } from "react-icons/cg";
 import { RxCross1 } from "react-icons/rx";
+import userImg from "./assets/user.gif";
+
 function Home() {
   const { userData, serverUrl, setUserData, getGeminiResponse } =
     useContext(userDataContext);
   const navigate = useNavigate();
 
   const [listening, setListening] = useState(false);
+
   const [userText, setUserText] = useState("");
   const [aiText, setAiText] = useState("");
+
   const isSpeakingRef = useRef(false);
   const recognitionRef = useRef(null);
+  const [ham, setHam] = useState(false);
   const isRecognizingRef = useRef(false);
   const fallbackIntervalRef = useRef(null);
   const synth = window.speechSynthesis;
@@ -131,7 +135,9 @@ function Home() {
     };
 
     recognition.onerror = (event) => {
-      console.warn(" Recognition error:", event.error);
+      if (event.error !== "aborted") {
+        console.warn("Recognition error:", event.error);
+      }
       isRecognizingRef.current = false;
       setListening(false);
       if (event.error !== "aborted" && !isSpeakingRef.current) {
@@ -154,6 +160,7 @@ function Home() {
         const data = await getGeminiResponse(transcript);
         if (data?.response) {
           handleCommand(data);
+
           setAiText(data.response);
           setUserText("");
         } else {
@@ -183,26 +190,29 @@ function Home() {
 
   return (
     <div className="w-full h-[100vh] bg-gradient-to-t from-[black] to-[#02023d] flex justify-center items-center flex-col gap-[15px]">
-      <RiMenu3Fill className="lg:hidden text-white absolute top-[20px] right-[20px] w-[25px] h-[25px]" />
-      <div className="absolute top-0 w-full h-full bg-[#00000008] backdrop-blur-lg flex-col  justify-center gap-4 px-6 py-10 lg:hidden flex items-center">
+      <CgMenuRight className="lg:hidden text-white absolute top-[20px] right-[20px] w-[25px] h-[25px]" />
+
+      <div className="absolute top-0 w-full h-full bg-[#00000053] backdrop-blur-lg p-[20px] flex flex-col gap-[20px] items-start">
         <RxCross1 className=" text-white absolute top-[20px] right-[20px] w-[25px] h-[25px]" />
-        <button
-          className="w-full min-w-[150px] h-[40px] bg-white  top-[100px] right-[20px] rounded-full cursor-pointer text-black font-semibold text-[20px] px-[20px] py-[10px] "
-          onClick={() => navigate("/customize")}
-        >
-          Customize Your Assistant
-        </button>
-        {/* <RiMenu3Fill className="lg:hidden text-white absolute top-[20px] right-[20px] w-[25px] h-[25px]" /> */}
 
         <button
-          className="w-full min-w-[150px] h-[40px] bg-white rounded-full cursor-pointer text-black font-semibold  top-[20px] right-[20px] text-[20px] mt-[30px] "
+          className="min-w-[150px] h-[60px]  bg-white rounded-full cursor-pointer text-black font-semibold top-[20px] right-[20px] text-20px mt-[30px]"
           onClick={handleLogOut}
         >
           Log Out
         </button>
 
+        <button
+          className="min-w-[150px] h-[60px] bg-white  rounded-full cursor-pointer text-black font-semibold text-[19px] px-[20px] py-[10px]"
+          onClick={() => navigate("/customize")}
+        >
+          Customize Your Assistant
+        </button>
+
         <div className="w-full h-[2px] bg-gray-400"></div>
+
         <h1 className="text-white font-semibold text-[19px]">History</h1>
+
         <div className="w-full h-[60%] overflow-y-auto flex flex-col gap-y-5 pr-2">
           {userData.history?.map((his, index) => (
             <span key={index} className="text-gray-200 text-[18px] truncate">
@@ -211,19 +221,19 @@ function Home() {
           ))}
         </div>
       </div>
-      <button
-        className="min-w-[150px] h-[40px] bg-white absolute top-[100px] right-[20px] rounded-full cursor-pointer text-black font-semibold text-20px px-[20px] py-[10px] hidden lg:block"
-        onClick={() => navigate("/customize")}
-      >
-        Customize Your Assistant
-      </button>
-      {/* <RiMenu3Fill className="lg:hidden text-white absolute top-[20px] right-[20px] w-[25px] h-[25px]" /> */}
 
       <button
-        className="min-w-[150px] h-[40px] bg-white rounded-full cursor-pointer text-black font-semibold absolute top-[20px] right-[20px] text-20px mt-[30px] hidden lg:block"
+        className="min-w-[150px] h-[40px] bg-white rounded-full cursor-pointer text-black font-semibold absolute hidden lg:block top-[20px] right-[20px] text-20px mt-[30px]"
         onClick={handleLogOut}
       >
         Log Out
+      </button>
+
+      <button
+        className="min-w-[150px] h-[40px] bg-white absolute top-[100px] right-[20px] rounded-full cursor-pointer text-black font-semibold text-[19px] px-[20px] py-[10px] hidden lg:block"
+        onClick={() => navigate("/customize")}
+      >
+        Customize Your Assistant
       </button>
 
       <div className="w-[300px] h-[400px] flex justify-center items-center overflow-hidden rounded-4xl shadow-lg cursor-pointer">
@@ -237,11 +247,13 @@ function Home() {
       <h1 className="text-white text-[18px] font-semibold">
         I'm {userData?.assistantName}
       </h1>
-      {!aiText && <img src={userImage} alt="" className="w-[200px]" />}
-      {aiText && <img src={aiImg} alt="" className="w-[200px]" />}
+
+      {!aiText && <img src={userImg} alt="" className="w-[200px]"></img>}
+
+      {aiText && <img src={aiImg} alt="" className="w-[200px]"></img>}
 
       <h1 className="text-white text-[18px] font-semibold text-wrap">
-        {userText ? userText : aiText ? aiText : ""}
+        {userText ? userText : aiText ? aiText : null}
       </h1>
     </div>
   );
