@@ -75,6 +75,8 @@ export const askToAssistant = async (req, res) => {
   try {
     const { command } = req.body;
     const user = await User.findById(req.userId);
+    user.history.push(command);
+    user.save();
     const userName = user.name;
     const assistantName = user.assistantName;
     const result = await geminiResponse(command, assistantName, userName);
@@ -130,7 +132,6 @@ export const askToAssistant = async (req, res) => {
           message: "Sorry, I can't understand",
         });
     }
-    return res.status(200).json(user);
   } catch (error) {
     return res.status(500).json({
       message: " Ask assistant error",

@@ -2,13 +2,18 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import { userDataContext } from "./context/UserContext";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-
+import aiImg from "./assets/ai.gif";
+import userImage from "./assets/user.gif";
+import { RiMenu3Fill } from "react-icons/ri";
+import { RxCross1 } from "react-icons/rx";
 function Home() {
   const { userData, serverUrl, setUserData, getGeminiResponse } =
     useContext(userDataContext);
   const navigate = useNavigate();
 
   const [listening, setListening] = useState(false);
+  const [userText, setUserText] = useState("");
+  const [aiText, setAiText] = useState("");
   const isSpeakingRef = useRef(false);
   const recognitionRef = useRef(null);
   const isRecognizingRef = useRef(false);
@@ -37,6 +42,7 @@ function Home() {
     }
     isSpeakingRef.current = true;
     utterance.onend = () => {
+      setAiText("");
       isSpeakingRef.current = false;
       // restart recognition after short delay
       setTimeout(() => {
@@ -140,12 +146,16 @@ function Home() {
         userData?.assistantName &&
         transcript.toLowerCase().includes(userData.assistantName.toLowerCase())
       ) {
+        setAiText("");
+        setUserText(transcript);
         recognition.stop(); // temporarily stop
         isRecognizingRef.current = false;
         setListening(false);
         const data = await getGeminiResponse(transcript);
         if (data?.response) {
           handleCommand(data);
+          setAiText(data.response);
+          setUserText("");
         } else {
           speak("Sorry, I didn't understand that.");
         }
@@ -173,15 +183,44 @@ function Home() {
 
   return (
     <div className="w-full h-[100vh] bg-gradient-to-t from-[black] to-[#02023d] flex justify-center items-center flex-col gap-[15px]">
+      <RiMenu3Fill className="lg:hidden text-white absolute top-[20px] right-[20px] w-[25px] h-[25px]" />
+      <div className="absolute top-0 w-full h-full bg-[#00000008] backdrop-blur-lg flex-col  justify-center gap-4 px-6 py-10 lg:hidden flex items-center">
+        <RxCross1 className=" text-white absolute top-[20px] right-[20px] w-[25px] h-[25px]" />
+        <button
+          className="w-full min-w-[150px] h-[40px] bg-white  top-[100px] right-[20px] rounded-full cursor-pointer text-black font-semibold text-[20px] px-[20px] py-[10px] "
+          onClick={() => navigate("/customize")}
+        >
+          Customize Your Assistant
+        </button>
+        {/* <RiMenu3Fill className="lg:hidden text-white absolute top-[20px] right-[20px] w-[25px] h-[25px]" /> */}
+
+        <button
+          className="w-full min-w-[150px] h-[40px] bg-white rounded-full cursor-pointer text-black font-semibold  top-[20px] right-[20px] text-[20px] mt-[30px] "
+          onClick={handleLogOut}
+        >
+          Log Out
+        </button>
+
+        <div className="w-full h-[2px] bg-gray-400"></div>
+        <h1 className="text-white font-semibold text-[19px]">History</h1>
+        <div className="w-full h-[60%] overflow-y-auto flex flex-col gap-y-5 pr-2">
+          {userData.history?.map((his, index) => (
+            <span key={index} className="text-gray-200 text-[18px] truncate">
+              {his}
+            </span>
+          ))}
+        </div>
+      </div>
       <button
-        className="min-w-[150px] h-[40px] bg-white absolute top-[100px] right-[20px] rounded-full cursor-pointer text-black font-semibold text-20px px-[20px] py-[10px]"
+        className="min-w-[150px] h-[40px] bg-white absolute top-[100px] right-[20px] rounded-full cursor-pointer text-black font-semibold text-20px px-[20px] py-[10px] hidden lg:block"
         onClick={() => navigate("/customize")}
       >
         Customize Your Assistant
       </button>
+      {/* <RiMenu3Fill className="lg:hidden text-white absolute top-[20px] right-[20px] w-[25px] h-[25px]" /> */}
 
       <button
-        className="min-w-[150px] h-[40px] bg-white rounded-full cursor-pointer text-black font-semibold absolute top-[20px] right-[20px] text-20px mt-[30px]"
+        className="min-w-[150px] h-[40px] bg-white rounded-full cursor-pointer text-black font-semibold absolute top-[20px] right-[20px] text-20px mt-[30px] hidden lg:block"
         onClick={handleLogOut}
       >
         Log Out
@@ -197,6 +236,12 @@ function Home() {
 
       <h1 className="text-white text-[18px] font-semibold">
         I'm {userData?.assistantName}
+      </h1>
+      {!aiText && <img src={userImage} alt="" className="w-[200px]" />}
+      {aiText && <img src={aiImg} alt="" className="w-[200px]" />}
+
+      <h1 className="text-white text-[18px] font-semibold text-wrap">
+        {userText ? userText : aiText ? aiText : ""}
       </h1>
     </div>
   );

@@ -17,7 +17,8 @@ const geminiResponse = async (command, assistantName, userName) => {
         -> "userinput": original sentence the user spoke.
 
         ->"response": A short voice-friendly reply, e.g., "Sure, playing it now", "Here's what I found", "Today is Tuesday", etc.
-"general": if it's a factual or informational question.
+"general": if it's a factual or informational question.aur agar koi aisa question puchta jiska answer tumhe pata hai usko bhi general ki category me rakho bas short answer dena
+
 
 "google_search": if user wants to search something on Google.
 
