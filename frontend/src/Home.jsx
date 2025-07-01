@@ -81,7 +81,7 @@ function Home() {
         openURL(`https://www.facebook.com/`);
         break;
       case "linkedin_open":
-        openURL(`https://www.linkedin.com/`);
+        openURL(`https://www.linkedin.com/search?q=${query}`);
         break;
       case "youtube_search":
       case "youtube_play":
@@ -226,7 +226,7 @@ function Home() {
   }, [userData, getGeminiResponse]);
 
   return (
-    <div className="w-full h-[100vh] bg-gradient-to-t from-[black] to-[#02023d] flex justify-center items-center flex-col gap-[15px]">
+    <div className="w-full h-[100vh] bg-gradient-to-t from-[black] to-[#3d0802] flex justify-center items-center flex-col gap-[15px]">
       <CgMenuRight
         className="lg:hidden text-white absolute top-[20px] right-[20px] w-[25px] h-[25px]"
         onClick={() => setHam(true)}

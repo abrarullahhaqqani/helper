@@ -50,7 +50,7 @@ function Customize2() {
   };
 
   return (
-    <div className=" w-full h-[100vh] bg-gradient-to-t from-[black] to-[#030353] flex justify-center items-center flex-col p-[20px] relative">
+    <div className=" w-full h-[100vh] bg-gradient-to-t from-[black] to-[#530a03] flex justify-center items-center flex-col p-[20px] relative">
       <MdKeyboardBackspace
         className="absolute top-[30px] left-[30px] cursor-pointer text-white w-[25px] h-[25px] "
         onClick={() => navigate("/customize")}
@@ -60,7 +60,7 @@ function Customize2() {
         className="text-white mb-[30px] text-[30px] text-center
       "
       >
-        Enter Your <span className="text-blue-200">Assistant Name </span>
+        Enter Your <span className="text-red-200">Assistant Name </span>
       </h1>
 
       <input
