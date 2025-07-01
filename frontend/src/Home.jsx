@@ -2,6 +2,10 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import { userDataContext } from "./context/UserContext";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import aiImg from "./assets/ai.gif";
+import { CgMenuRight } from "react-icons/cg";
+import { RxCross1 } from "react-icons/rx";
+import userImg from "./assets/user.gif";
 
 function Home() {
   const { userData, serverUrl, setUserData, getGeminiResponse } =
@@ -9,8 +13,13 @@ function Home() {
   const navigate = useNavigate();
 
   const [listening, setListening] = useState(false);
+
+  const [userText, setUserText] = useState("");
+  const [aiText, setAiText] = useState("");
+
   const isSpeakingRef = useRef(false);
   const recognitionRef = useRef(null);
+  const [ham, setHam] = useState(false);
   const isRecognizingRef = useRef(false);
   const fallbackIntervalRef = useRef(null);
   const synth = window.speechSynthesis;
@@ -37,6 +46,7 @@ function Home() {
     }
     isSpeakingRef.current = true;
     utterance.onend = () => {
+      setAiText("");
       isSpeakingRef.current = false;
       // restart recognition after short delay
       setTimeout(() => {
@@ -125,7 +135,9 @@ function Home() {
     };
 
     recognition.onerror = (event) => {
-      console.warn(" Recognition error:", event.error);
+      if (event.error !== "aborted") {
+        console.warn("Recognition error:", event.error);
+      }
       isRecognizingRef.current = false;
       setListening(false);
       if (event.error !== "aborted" && !isSpeakingRef.current) {
@@ -140,12 +152,17 @@ function Home() {
         userData?.assistantName &&
         transcript.toLowerCase().includes(userData.assistantName.toLowerCase())
       ) {
+        setAiText("");
+        setUserText(transcript);
         recognition.stop(); // temporarily stop
         isRecognizingRef.current = false;
         setListening(false);
         const data = await getGeminiResponse(transcript);
         if (data?.response) {
           handleCommand(data);
+
+          setAiText(data.response);
+          setUserText("");
         } else {
           speak("Sorry, I didn't understand that.");
         }
@@ -173,18 +190,48 @@ function Home() {
 
   return (
     <div className="w-full h-[100vh] bg-gradient-to-t from-[black] to-[#02023d] flex justify-center items-center flex-col gap-[15px]">
-      <button
-        className="min-w-[150px] h-[40px] bg-white absolute top-[100px] right-[20px] rounded-full cursor-pointer text-black font-semibold text-20px px-[20px] py-[10px]"
-        onClick={() => navigate("/customize")}
-      >
-        Customize Your Assistant
-      </button>
+      <CgMenuRight className="lg:hidden text-white absolute top-[20px] right-[20px] w-[25px] h-[25px]" />
+
+      <div className="absolute top-0 w-full h-full bg-[#00000053] backdrop-blur-lg p-[20px] flex flex-col gap-[20px] items-start">
+        <RxCross1 className=" text-white absolute top-[20px] right-[20px] w-[25px] h-[25px]" />
+
+        <button
+          className="min-w-[150px] h-[60px]  bg-white rounded-full cursor-pointer text-black font-semibold top-[20px] right-[20px] text-20px mt-[30px]"
+          onClick={handleLogOut}
+        >
+          Log Out
+        </button>
+
+        <button
+          className="min-w-[150px] h-[60px] bg-white  rounded-full cursor-pointer text-black font-semibold text-[19px] px-[20px] py-[10px]"
+          onClick={() => navigate("/customize")}
+        >
+          Customize Your Assistant
+        </button>
+
+        <div className="w-full h-[2px] bg-gray-400"></div>
+
+        <h1 className="text-white font-semibold text-[19px]">History</h1>
+
+        <div className="w-full h-[60%] overflow-auto flex flex-col gap-[20px]">
+          {userData.history?.map((his) => (
+            <span className="text-white text-[18px] truncate">{his}</span>
+          ))}
+        </div>
+      </div>
 
       <button
-        className="min-w-[150px] h-[40px] bg-white rounded-full cursor-pointer text-black font-semibold absolute top-[20px] right-[20px] text-20px mt-[30px]"
+        className="min-w-[150px] h-[40px] bg-white rounded-full cursor-pointer text-black font-semibold absolute hidden lg:block top-[20px] right-[20px] text-20px mt-[30px]"
         onClick={handleLogOut}
       >
         Log Out
+      </button>
+
+      <button
+        className="min-w-[150px] h-[40px] bg-white absolute top-[100px] right-[20px] rounded-full cursor-pointer text-black font-semibold text-[19px] px-[20px] py-[10px] hidden lg:block"
+        onClick={() => navigate("/customize")}
+      >
+        Customize Your Assistant
       </button>
 
       <div className="w-[300px] h-[400px] flex justify-center items-center overflow-hidden rounded-4xl shadow-lg cursor-pointer">
@@ -197,6 +244,14 @@ function Home() {
 
       <h1 className="text-white text-[18px] font-semibold">
         I'm {userData?.assistantName}
+      </h1>
+
+      {!aiText && <img src={userImg} alt="" className="w-[200px]"></img>}
+
+      {aiText && <img src={aiImg} alt="" className="w-[200px]"></img>}
+
+      <h1 className="text-white text-[18px] font-semibold text-wrap">
+        {userText ? userText : aiText ? aiText : null}
       </h1>
     </div>
   );
