@@ -136,8 +136,11 @@ export const askToAssistant = async (req, res) => {
         });
     }
   } catch (error) {
-    return res.status(500).json({
-      message: " Ask assistant error",
-    });
+    console.error("🔥 AskToAssistant Error:", error);
+return res.status(500).json({
+  message: " Ask assistant error",
+  error: error.message,
+});
+
   }
 };
