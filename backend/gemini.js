@@ -38,9 +38,14 @@ User input: ${command}
 
     return text;
   } catch (error) {
-    console.error("🔥 Gemini API Error:", error.response?.data || error.message || error);
-    throw new Error("Gemini API failed");
-  }
+  console.error("🔥 Gemini API Error - Full:", {
+    status: error?.response?.status,
+    data: error?.response?.data,
+    message: error.message
+  });
+  throw new Error("Gemini API failed");
+}
+
 };
 
 export default geminiResponse;
